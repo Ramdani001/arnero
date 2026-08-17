@@ -1,9 +1,11 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import MiniCard from "./MiniCard";
 import { PRODUCTS, TAB_LABELS } from "../data/content";
 
 export default function ProductsSection() {
   const [activeTab, setActiveTab] = useState("ygo");
+  const navigate = useNavigate();
 
   return (
     <section id="produk">
@@ -33,6 +35,16 @@ export default function ProductsSection() {
           {PRODUCTS[activeTab].map(([name, tag], i) => (
             <MiniCard key={name} name={name} tag={tag} seed={i} />
           ))}
+        </div>
+
+        {/* Tombol redirect ke halaman semua produk */}
+        <div className="see-all-wrap">
+          <button
+            className="see-all-btn"
+            onClick={() => navigate("/products")}
+          >
+            LIHAT SEMUA PRODUK
+          </button>
         </div>
       </div>
     </section>
