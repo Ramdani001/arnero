@@ -1,53 +1,45 @@
-import React, { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import "../styles/site.css";
-
-const CATEGORIES = ["Semua", "Yu-Gi-Oh!", "Duel Masters", "TCG Lainnya"];
-
-const RARITIES = [
-  "Semua Rarity",
-  "Common",
-  "Rare",
-  "Attribute Rare",
-  "Ultra Rare",
-  "Secret Rare",
-];
-
-const PRODUCTS = [
-  { id: 1, name: "Voltguard Dragon", category: "Yu-Gi-Oh!", rarity: "Attribute Rare", price: 185000, gradient: "linear-gradient(135deg,#3b6fd6,#8fce4f)" },
-  { id: 2, name: "Twin Fang Serpent", category: "Yu-Gi-Oh!", rarity: "Ultra Rare", price: 225000, gradient: "linear-gradient(135deg,#2f4f8f,#c4e94c)" },
-  { id: 3, name: "Solar Phoenix Ace", category: "Yu-Gi-Oh!", rarity: "Secret Rare", price: 349000, gradient: "linear-gradient(135deg,#7fb3e8,#c4e94c)" },
-  { id: 4, name: "Iron Duelist Golem", category: "Yu-Gi-Oh!", rarity: "Common", price: 45000, gradient: "linear-gradient(135deg,#c4e94c,#7fb3e8)" },
-  { id: 5, name: "Frost Widow Spider", category: "Duel Masters", rarity: "Rare", price: 95000, gradient: "linear-gradient(135deg,#4f8fd6,#3b6fd6)" },
-  { id: 6, name: "Ember Colossus", category: "Duel Masters", rarity: "Ultra Rare", price: 260000, gradient: "linear-gradient(135deg,#c4e94c,#4f8fd6)" },
-  { id: 7, name: "Verdant Guardian", category: "Duel Masters", rarity: "Attribute Rare", price: 175000, gradient: "linear-gradient(135deg,#8fce4f,#2f4f8f)" },
-  { id: 8, name: "Shadow Reaper Knight", category: "Duel Masters", rarity: "Secret Rare", price: 399000, gradient: "linear-gradient(135deg,#3b6fd6,#c4e94c)" },
-  { id: 9, name: "Storm Herald", category: "TCG Lainnya", rarity: "Rare", price: 89000, gradient: "linear-gradient(135deg,#7fb3e8,#8fce4f)" },
-  { id: 10, name: "Runeblade Sentinel", category: "TCG Lainnya", rarity: "Ultra Rare", price: 210000, gradient: "linear-gradient(135deg,#c4e94c,#3b6fd6)" },
-  { id: 11, name: "Abyssal Kraken", category: "TCG Lainnya", rarity: "Secret Rare", price: 420000, gradient: "linear-gradient(135deg,#2f4f8f,#8fce4f)" },
-  { id: 12, name: "Copper Automaton", category: "TCG Lainnya", rarity: "Common", price: 39000, gradient: "linear-gradient(135deg,#8fce4f,#3b6fd6)" },
-];
 
 function formatRupiah(value) {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(Number(value));
 }
 
 function ProductCard({ product }) {
+  const primaryImage =
+    product.images?.find((img) => img.isPrimary)?.url ||
+    product.images?.[0]?.url;
+
+  const displayCategory = product.categories?.[0]?.category?.name || "Lainnya";
+
   return (
     <div style={styles.card}>
-      <div style={{ ...styles.cardImage, background: product.gradient }}>
-        <div style={styles.cardShapeCircle} />
-        <div style={styles.cardShapePoly} />
+      <div style={styles.cardImageContainer}>
+        {primaryImage ? (
+          <img
+            src={primaryImage}
+            alt={product.name}
+            style={styles.cardImageElement}
+            loading="lazy"
+          />
+        ) : (
+          <div style={styles.noImageFallback}>No Image</div>
+        )}
       </div>
       <div style={styles.cardBody}>
-        <h3 style={styles.cardName}>{product.name.toUpperCase()}</h3>
+        <h3 style={styles.cardName}>{product.name?.toUpperCase()}</h3>
         <div style={styles.cardMetaRow}>
-          <span style={styles.cardRarity}>{product.rarity.toUpperCase()}</span>
-          <span style={styles.cardPrice}>{formatRupiah(product.price)}</span>
+          <span style={styles.cardCategoryText}>
+            {displayCategory.toUpperCase()}
+          </span>
+          <span style={styles.cardPrice}>
+            {formatRupiah(product.price || 0)}
+          </span>
         </div>
       </div>
     </div>
@@ -55,26 +47,110 @@ function ProductCard({ product }) {
 }
 
 export default function ProductCatalogPage() {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("Semua");
-  const [rarity, setRarity] = useState("Semua Rarity");
-   const [navOpen, setNavOpen] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const filteredProducts = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    return PRODUCTS.filter((p) => {
-      const matchesSearch = query === "" || p.name.toLowerCase().includes(query);
-      const matchesCategory = category === "Semua" || p.category === category;
-      const matchesRarity = rarity === "Semua Rarity" || p.rarity === rarity;
-      return matchesSearch && matchesCategory && matchesRarity;
-    });
-  }, [search, category, rarity]);
+  const [categoriesList, setCategoriesList] = useState([
+    { id: "semua", name: "Semua" },
+  ]);
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [category, setCategory] = useState("Semua");
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BASE_URL_API}/categories?limit=50`,
+        );
+        const result = await response.json();
+
+        if (result.success) {
+          setCategoriesList([
+            { id: "semua", name: "Semua" },
+            ...(result.data || []),
+          ]);
+        }
+      } catch (err) {
+        console.error("Gagal memuat kategori:", err);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        let url = `${import.meta.env.VITE_BASE_URL_API}/cards?page=${page}&limit=8&sortBy=createdAt&sortOrder=desc&stock=on`;
+
+        if (debouncedSearch.trim() !== "") {
+          url += `&name=${encodeURIComponent(debouncedSearch.trim())}`;
+        }
+
+        if (category !== "Semua") {
+          url += `&categories=${encodeURIComponent(category)}`;
+        }
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          setProducts(result.data || []);
+
+          if (result.metadata) {
+            setTotalPages(result.metadata.totalPages);
+            setTotalItems(result.metadata.total);
+          }
+        } else {
+          throw new Error(result.message || "Gagal mengambil data");
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [page, debouncedSearch, category]);
+
+  const handlePrevPage = () => {
+    setPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setPage((prev) => Math.min(totalPages, prev + 1));
+  };
 
   return (
     <div style={styles.page}>
       <Header navOpen={navOpen} setNavOpen={setNavOpen} />
       <div style={styles.container}>
-        {/* Header */}
         <div style={styles.header}>
           <div style={styles.eyebrow}>
             <span style={styles.eyebrowDot} />
@@ -83,18 +159,16 @@ export default function ProductCatalogPage() {
           <h1 style={styles.title}>KATALOG TRADING CARD GAME</h1>
           <p style={styles.subtitle}>
             Jelajahi seluruh koleksi kartu yang kami distribusikan secara resmi.
-            Gunakan pencarian atau filter untuk menemukan kartu incaranmu.
           </p>
         </div>
 
-        {/* Search bar */}
         <div style={styles.searchWrap}>
           <span style={styles.searchIcon}>&#128269;</span>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama kartu..."
+            placeholder="Cari nama kartu di seluruh toko..."
             style={styles.searchInput}
           />
           {search && (
@@ -104,73 +178,104 @@ export default function ProductCatalogPage() {
           )}
         </div>
 
-        {/* Category filter pills */}
-        <div style={styles.pillRow}>
-          {CATEGORIES.map((cat) => {
-            const active = cat === category;
-            return (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                style={{
-                  ...styles.pill,
-                  ...(active ? styles.pillActive : {}),
-                }}
-              >
-                {cat.toUpperCase()}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Rarity filter */}
-        <div style={styles.rarityRow}>
-          {RARITIES.map((r) => {
-            const active = r === rarity;
-            return (
-              <button
-                key={r}
-                onClick={() => setRarity(r)}
-                style={{
-                  ...styles.rarityChip,
-                  ...(active ? styles.rarityChipActive : {}),
-                }}
-              >
-                {r}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Result count */}
-        <div style={styles.resultCount}>
-          Menampilkan {filteredProducts.length} dari {PRODUCTS.length} produk
-        </div>
-
-        {/* Product grid */}
-        {filteredProducts.length > 0 ? (
-          <div style={styles.grid}>
-            {filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+        {loading ? (
+          <div style={styles.emptyState}>
+            <p style={styles.emptyTitle}>Memuat data...</p>
+            <p style={styles.emptyText}>
+              Sedang mengambil data kartu dari server.
+            </p>
+          </div>
+        ) : error ? (
+          <div style={styles.emptyState}>
+            <p style={{ ...styles.emptyTitle, color: "#ff6b6b" }}>
+              Gagal memuat produk
+            </p>
+            <p style={styles.emptyText}>{error}</p>
           </div>
         ) : (
-          <div style={styles.emptyState}>
-            <p style={styles.emptyTitle}>Kartu tidak ditemukan</p>
-            <p style={styles.emptyText}>
-              Coba ubah kata kunci pencarian atau reset filter kategori dan rarity.
-            </p>
-            <button
-              style={styles.resetButton}
-              onClick={() => {
-                setSearch("");
-                setCategory("Semua");
-                setRarity("Semua Rarity");
-              }}
-            >
-              Reset Filter
-            </button>
-          </div>
+          <>
+            <div style={styles.pillRow}>
+              {categoriesList.map((cat) => {
+                const active = cat.name === category;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setCategory(cat.name);
+                      setPage(1); // Reset halaman ke 1 setiap ganti kategori
+                    }}
+                    style={{
+                      ...styles.pill,
+                      ...(active ? styles.pillActive : {}),
+                    }}
+                  >
+                    {cat.name.toUpperCase()}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div style={styles.resultCount}>
+              Total Produk: {totalItems} (Halaman {page} dari {totalPages})
+            </div>
+
+            {products.length > 0 ? (
+              <>
+                <div style={styles.grid}>
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+
+                {totalPages > 1 && (
+                  <div style={styles.pagination}>
+                    <button
+                      onClick={handlePrevPage}
+                      disabled={page === 1}
+                      style={{
+                        ...styles.pageButton,
+                        ...(page === 1 ? styles.pageButtonDisabled : {}),
+                      }}
+                    >
+                      &#8592; Sebelumnya
+                    </button>
+                    <span style={styles.pageText}>
+                      Halaman {page} / {totalPages}
+                    </span>
+                    <button
+                      onClick={handleNextPage}
+                      disabled={page === totalPages}
+                      style={{
+                        ...styles.pageButton,
+                        ...(page === totalPages
+                          ? styles.pageButtonDisabled
+                          : {}),
+                      }}
+                    >
+                      Selanjutnya &#8594;
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={styles.emptyState}>
+                <p style={styles.emptyTitle}>Produk tidak ditemukan</p>
+                <p style={styles.emptyText}>
+                  Tidak ada kartu yang cocok dengan filter atau pencarian Anda.
+                </p>
+                <button
+                  style={styles.resetButton}
+                  onClick={() => {
+                    setSearch("");
+                    setCategory("Semua");
+                    setPage(1);
+                  }}
+                >
+                  Reset Filter
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -187,14 +292,8 @@ const styles = {
     padding: "48px 24px 96px",
     color: "#e8ecf5",
   },
-  container: {
-    maxWidth: 1200,
-    margin: "0 auto",
-  },
-  header: {
-    textAlign: "center",
-    marginBottom: 40,
-  },
+  container: { maxWidth: 1200, margin: "0 auto" },
+  header: { textAlign: "center", marginBottom: 40 },
   eyebrow: {
     display: "inline-flex",
     alignItems: "center",
@@ -231,11 +330,7 @@ const styles = {
     fontFamily: "Arial, sans-serif",
     fontWeight: 400,
   },
-  searchWrap: {
-    position: "relative",
-    maxWidth: 480,
-    margin: "0 auto 28px",
-  },
+  searchWrap: { position: "relative", maxWidth: 480, margin: "0 auto 28px" },
   searchIcon: {
     position: "absolute",
     left: 16,
@@ -266,7 +361,6 @@ const styles = {
     color: "#9aa5bd",
     fontSize: 20,
     cursor: "pointer",
-    lineHeight: 1,
     padding: 4,
   },
   pillRow: {
@@ -274,7 +368,7 @@ const styles = {
     justifyContent: "center",
     flexWrap: "wrap",
     gap: 12,
-    marginBottom: 18,
+    marginBottom: 32,
   },
   pill: {
     background: "#111a2c",
@@ -287,98 +381,77 @@ const styles = {
     color: "#9aa5bd",
     cursor: "pointer",
   },
-  pillActive: {
-    background: ACCENT,
-    borderColor: ACCENT,
-    color: "#132000",
-  },
-  rarityRow: {
-    display: "flex",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 32,
-  },
-  rarityChip: {
-    background: "transparent",
-    border: "1px solid #23304a",
-    borderRadius: 8,
-    padding: "7px 14px",
-    fontSize: 12,
-    color: "#7c869e",
-    cursor: "pointer",
-    fontFamily: "Arial, sans-serif",
-  },
-  rarityChipActive: {
-    borderColor: ACCENT,
-    color: ACCENT,
-    background: "rgba(196,233,76,0.08)",
-  },
+  pillActive: { background: ACCENT, borderColor: ACCENT, color: "#132000" },
   resultCount: {
-    fontSize: 13,
-    color: "#7c869e",
-    marginBottom: 16,
+    fontSize: 14,
+    color: "#9aa5bd",
+    marginBottom: 20,
     fontFamily: "Arial, sans-serif",
+    fontWeight: 600,
   },
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
     gap: 24,
+    marginBottom: 40,
   },
   card: {
     background: "#111a2c",
     border: "1px solid #1c2740",
     borderRadius: 14,
     overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
   },
-  cardImage: {
-    position: "relative",
-    height: 170,
+  cardImageContainer: {
+    width: "100%",
+    height: 220,
+    backgroundColor: "#0d1526",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     overflow: "hidden",
+    borderBottom: "1px solid #1c2740",
   },
-  cardShapeCircle: {
-    position: "absolute",
-    width: 70,
-    height: 70,
-    borderRadius: "50%",
-    background: "rgba(0,0,0,0.18)",
-    top: "30%",
-    left: "48%",
-  },
-  cardShapePoly: {
-    position: "absolute",
-    width: 80,
-    height: 110,
-    background: "rgba(0,0,0,0.18)",
-    clipPath: "polygon(20% 0%, 100% 15%, 80% 100%, 0% 85%)",
-    top: "12%",
-    left: "35%",
+  cardImageElement: { width: "100%", height: "100%", objectFit: "cover" },
+  noImageFallback: {
+    color: "#4a5a7a",
+    fontSize: 14,
+    fontFamily: "Arial, sans-serif",
   },
   cardBody: {
     padding: "16px 18px 20px",
+    display: "flex",
+    flexDirection: "column",
+    flexGrow: 1,
+    justifyContent: "space-between",
   },
   cardName: {
     fontSize: 16,
     fontWeight: 700,
     letterSpacing: "0.5px",
-    margin: "0 0 8px",
+    margin: "0 0 16px",
     color: "#f5f7fb",
+    lineHeight: 1.4,
   },
   cardMetaRow: {
     display: "flex",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-end",
   },
-  cardRarity: {
+  cardCategoryText: {
     fontSize: 11,
     fontWeight: 700,
     letterSpacing: "0.5px",
     color: ACCENT,
+    background: "rgba(196,233,76,0.1)",
+    padding: "4px 8px",
+    borderRadius: 6,
   },
   cardPrice: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: 600,
-    color: "#9aa5bd",
+    color: "#fff",
     fontFamily: "Arial, sans-serif",
   },
   emptyState: {
@@ -409,4 +482,25 @@ const styles = {
     color: "#132000",
     cursor: "pointer",
   },
+  pagination: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 20,
+    marginTop: 40,
+  },
+  pageButton: {
+    background: "#1c2740",
+    border: "1px solid #23304a",
+    color: "#e8ecf5",
+    padding: "10px 20px",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 14,
+    fontWeight: 600,
+    fontFamily: "Arial, sans-serif",
+    transition: "all 0.2s ease",
+  },
+  pageButtonDisabled: { opacity: 0.5, cursor: "not-allowed" },
+  pageText: { color: "#9aa5bd", fontSize: 15, fontFamily: "Arial, sans-serif" },
 };

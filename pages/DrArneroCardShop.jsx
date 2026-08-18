@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import "../styles/site.css";
 
+import AboutSection from "../components/AboutSection";
+import ContactSection from "../components/ContactSection";
+import Footer from "../components/Footer";
 import Header from "../components/Header";
 import Hero from "../components/Hero";
 import Marquee from "../components/Marquee";
-import AboutSection from "../components/AboutSection";
+import PartnersSection from "../components/PartnersSection";
 import ProductsSection from "../components/ProductsSection";
 import StatsSection from "../components/StatsSection";
-import PartnersSection from "../components/PartnersSection";
-import ContactSection from "../components/ContactSection";
-import Footer from "../components/Footer";
 
 export default function DrArneroCardShop() {
   const [navOpen, setNavOpen] = useState(false);

@@ -42,9 +42,9 @@ export default function Hero() {
           ADALAH <span className="accent">AWAL DUEL</span> BARU
         </h1>
         <p className="lede">
-          dr.Arnero Card Shop menghadirkan Yu-Gi-Oh!, Duel Masters, dan trading card game
-          pilihan lainnya ke seluruh penjuru Indonesia — dari booster pack hingga arena
-          turnamen.
+          dr.Arnero Card Shop menghadirkan Yu-Gi-Oh!, Duel Masters, dan trading
+          card game pilihan lainnya ke seluruh penjuru Indonesia — dari booster
+          pack hingga arena turnamen.
         </p>
         <div className="hero-actions">
           <a className="btn btn-primary" href="#produk">
