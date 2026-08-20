@@ -1,4 +1,3 @@
-import React from "react";
 import { HUE_PAIRS } from "../data/content";
 
 export default function CardArt({ seed }) {
@@ -17,7 +16,12 @@ export default function CardArt({ seed }) {
         points={`${60 + seed * 7},30 ${140 - seed * 4},50 120,110 70,115`}
         fill="rgba(10,10,12,0.22)"
       />
-      <circle cx={100 + (seed % 3) * 10} cy="60" r="26" fill="rgba(10,10,12,0.18)" />
+      <circle
+        cx={100 + (seed % 3) * 10}
+        cy="60"
+        r="26"
+        fill="rgba(10,10,12,0.18)"
+      />
     </svg>
   );
 }

@@ -19,28 +19,17 @@ export default function MiniCard({ name, tag, seed, imageUrl, price }) {
 
   return (
     <div
-      className="mini-card"
+      className="bg-[#16264a] border border-[#bbe150]/18 rounded-[14px] p-4 transition-all duration-300 ease-out shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] [transform-style:preserve-3d] cursor-pointer flex flex-col h-full"
       ref={ref}
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      style={{ display: "flex", flexDirection: "column" }}
     >
-      <div
-        className="mini-art"
-        style={{ position: "relative", overflow: "hidden" }}
-      >
+      <div className="h-[150px] rounded-[9px] mb-3.5 relative overflow-hidden border border-white/10 shrink-0">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={name}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              position: "absolute",
-              top: 0,
-              left: 0,
-            }}
+            className="w-full h-full object-cover absolute top-0 left-0"
             loading="lazy"
           />
         ) : (
@@ -48,34 +37,17 @@ export default function MiniCard({ name, tag, seed, imageUrl, price }) {
         )}
       </div>
 
-      <div
-        style={{
-          padding: "12px 0 0",
-          flexGrow: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        <h4 style={{ margin: "0 0 8px", fontSize: "16px", lineHeight: "1.4" }}>
+      <div className="pt-3 flex-grow flex flex-col justify-between">
+        <h4 className="font-['Bebas_Neue',sans-serif] font-normal text-[17px] text-[#f5f5f0] mb-1 tracking-[0.02em] leading-[1.4] line-clamp-1">
           {name}
         </h4>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-end",
-          }}
-        >
-          <div className="tag" style={{ margin: 0 }}>
+        <div className="flex justify-between items-end mt-2">
+          <div className="text-[11px] text-[#dcf0a3] tracking-[0.08em] uppercase m-0">
             {tag}
           </div>
           {price && (
-            <div
-              className="price"
-              style={{ fontSize: "14px", fontWeight: "600", color: "#c4e94c" }}
-            >
+            <div className="text-[14px] font-semibold text-[#c4e94c] m-0">
               {price}
             </div>
           )}

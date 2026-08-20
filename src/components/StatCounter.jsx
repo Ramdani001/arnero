@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function StatCounter({ target, label }) {
   const [count, setCount] = useState(0);
@@ -27,18 +27,23 @@ export default function StatCounter({ target, label }) {
           }
         });
       },
-      { threshold: 0.4 }
+      { threshold: 0.4 },
     );
     io.observe(el);
     return () => io.disconnect();
   }, [target]);
 
   return (
-    <div className="stat">
-      <div className="num" ref={ref}>
+    <div className="flex flex-col items-center justify-center">
+      <div
+        className="font-['Bebas_Neue',sans-serif] font-normal text-[54px] bg-gradient-to-r from-[#dcf0a3] to-[#bbe150] bg-clip-text text-transparent leading-none"
+        ref={ref}
+      >
         {count}
       </div>
-      <div className="lbl">{label}</div>
+      <div className="text-[#94a3c4] text-[13px] tracking-[0.1em] uppercase mt-1.5 font-semibold">
+        {label}
+      </div>
     </div>
   );
 }

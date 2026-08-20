@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 export default function Marquee() {
-  // State default sementara saat loading
   const [items, setItems] = useState(["MEMUAT DATA...", "MEMUAT DATA..."]);
 
   useEffect(() => {
@@ -20,7 +19,6 @@ export default function Marquee() {
         }
       } catch (error) {
         console.error("Gagal memuat kategori untuk marquee:", error);
-        setItems(["TRADING CARD GAME", "COLLECTION", "OFFICIAL PARTNER"]);
       }
     };
 
@@ -28,10 +26,21 @@ export default function Marquee() {
   }, []);
 
   return (
-    <div className="marquee">
-      <div className="marquee-track">
+    <div className="border-t border-b border-[#bbe150]/18 py-4 overflow-hidden whitespace-nowrap bg-white/[0.02]">
+      <div className="inline-flex gap-14 animate-[scroll_26s_linear_infinite] font-['Bebas_Neue',sans-serif] font-normal tracking-[0.1em] text-[#94a3c4] text-[15px]">
         {items.map((t, i) => (
-          <span key={i} className={i % 3 === 0 ? "hi" : ""}>
+          <span
+            key={`item-${i}`}
+            className={`opacity-80 ${i % 3 === 0 ? "text-[#dcf0a3]" : ""}`}
+          >
+            {t}
+          </span>
+        ))}
+        {items.map((t, i) => (
+          <span
+            key={`dup-${i}`}
+            className={`opacity-80 ${i % 3 === 0 ? "text-[#dcf0a3]" : ""}`}
+          >
             {t}
           </span>
         ))}

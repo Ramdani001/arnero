@@ -19,7 +19,11 @@ export const PRODUCTS = {
   ],
 };
 
-export const TAB_LABELS = { ygo: "Yu-Gi-Oh!", dm: "Duel Masters", lain: "TCG Lainnya" };
+export const TAB_LABELS = {
+  ygo: "Yu-Gi-Oh!",
+  dm: "Duel Masters",
+  lain: "TCG Lainnya",
+};
 
 export const MARQUEE_ITEMS = [
   "DR.ARNERO CARD SHOP",
@@ -41,13 +45,6 @@ export const HUE_PAIRS = [
   ["#345799", "#bbe150"],
   ["#8fb8ff", "#bbe150"],
   ["#bbe150", "#8fb8ff"],
-];
-
-export const NAV_LINKS = [
-  ["#produk", "Produk"],
-  ["#kegiatan", "Kegiatan"],
-  ["#partner", "Partner"],
-  ["#kontak", "Kontak"],
 ];
 
 export const ABOUT_CARDS = [
