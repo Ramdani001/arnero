@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import AboutSection from "../components/AboutSection";
 import ContactSection from "../components/ContactSection";
@@ -9,7 +10,7 @@ import Marquee from "../components/Marquee";
 import PartnersSection from "../components/PartnersSection";
 import ProductsSection from "../components/ProductsSection";
 import StatsSection from "../components/StatsSection";
-import { useLocation } from "react-router-dom";
+import StoreAddressSection from "../components/StoreAddressSection";
 
 export default function DrArneroCardShop() {
   const [navOpen, setNavOpen] = useState(false);
@@ -50,6 +51,7 @@ export default function DrArneroCardShop() {
           <AboutSection />
           <ProductsSection />
           <StatsSection />
+          <StoreAddressSection />
           <PartnersSection />
           <ContactSection />
         </main>
