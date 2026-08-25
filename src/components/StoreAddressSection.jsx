@@ -8,7 +8,7 @@ export default function StoreAddressSection() {
     const fetchStoreAddress = async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_BASE_URL_API}/compro/contents/by-category/STORE_ADDRESS`,
+          `${import.meta.env.VITE_BASE_URL_API}/compro/contents?sort=-1`,
         );
         const json = await res.json();
 
