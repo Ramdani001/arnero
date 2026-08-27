@@ -4,7 +4,7 @@ import ProductCatalogPage from "./pages/ProductCatalogPage";
 
 export default function App() {
   return (
-    <BrowserRouter basename="/arnero">
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<DrArneroCardShop />} />
         <Route path="/products" element={<ProductCatalogPage />} />
