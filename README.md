@@ -1,4 +1,4 @@
-# Dr. Arnero Card Shop
+# Arnero Card Game Store
 
 Project React (Vite + Tailwind CSS) berisi komponen `DrArneroCardShop`.
 

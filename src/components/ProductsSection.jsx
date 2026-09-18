@@ -116,7 +116,10 @@ export default function ProductsSection() {
         <div className="text-center mt-8">
           <button
             className="bg-[#c4e94c] text-[#132000] border-none rounded-full px-7 py-3 font-bold text-[13px] tracking-[0.5px] cursor-pointer hover:bg-[#bbe150] transition-transform active:scale-95 shadow-[0_6px_20px_rgba(187,225,80,0.25)]"
-            onClick={() => navigate("/products")}
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: "instant" });
+              navigate("/products");
+            }}
           >
             LIHAT SEMUA PRODUK
           </button>

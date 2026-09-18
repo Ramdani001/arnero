@@ -26,7 +26,7 @@ export const TAB_LABELS = {
 };
 
 export const MARQUEE_ITEMS = [
-  "DR.ARNERO CARD SHOP",
+  "Arnero Card Game Store",
   "YU-GI-OH! OFFICIAL CARD GAME",
   "DUEL MASTERS",
   "KONAMI PARTNER",

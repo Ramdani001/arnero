@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
 import { ProductCard } from "../components/ProductCard";
 
 export default function ProductCatalogPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(null);
 
   const [categoriesList, setCategoriesList] = useState([
@@ -12,13 +13,26 @@ export default function ProductCatalogPage() {
   ]);
 
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [totalItems, setTotalItems] = useState(0);
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("Semua");
   const [navOpen, setNavOpen] = useState(false);
+
+  const observer = useRef();
+  const categoryScrollRef = useRef(null);
+
+  const scrollCategories = (direction) => {
+    if (categoryScrollRef.current) {
+      const scrollAmount = direction === "left" ? -240 : 240;
+      categoryScrollRef.current.scrollBy({
+        left: scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -45,16 +59,31 @@ export default function ProductCatalogPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
+      setProducts([]);
       setPage(1);
-    }, 500);
+      setHasMore(true);
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [search]);
 
+  const handleCategoryChange = (catName) => {
+    if (catName === category) return;
+    setCategory(catName);
+    setProducts([]);
+    setPage(1);
+    setHasMore(true);
+  };
+
   useEffect(() => {
     const fetchCards = async () => {
-      setLoading(true);
+      if (page === 1) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
+
       try {
         let url = `${import.meta.env.VITE_BASE_URL_API}/cards?page=${page}&limit=8&sortBy=createdAt&sortOrder=desc&stock=on`;
 
@@ -75,11 +104,14 @@ export default function ProductCatalogPage() {
         const result = await response.json();
 
         if (result.success) {
-          setProducts(result.data || []);
+          const newData = result.data || [];
+          setProducts((prev) => (page === 1 ? newData : [...prev, ...newData]));
 
           if (result.metadata) {
-            setTotalPages(result.metadata.totalPages);
-            setTotalItems(result.metadata.total);
+            setTotalItems(result.metadata.total || 0);
+            setHasMore(page < result.metadata.totalPages);
+          } else {
+            setHasMore(newData.length > 0);
           }
         } else {
           throw new Error(result.message || "Gagal mengambil data");
@@ -88,163 +120,259 @@ export default function ProductCatalogPage() {
         setError(err.message);
       } finally {
         setLoading(false);
+        setLoadingMore(false);
       }
     };
 
     fetchCards();
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }, [page, debouncedSearch, category]);
 
-  const handlePrevPage = () => {
-    setPage((prev) => Math.max(1, prev - 1));
-  };
+  const lastProductElementRef = useCallback(
+    (node) => {
+      if (loading || loadingMore) return;
+      if (observer.current) observer.current.disconnect();
 
-  const handleNextPage = () => {
-    setPage((prev) => Math.min(totalPages, prev + 1));
-  };
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting && hasMore) {
+            setPage((prevPage) => prevPage + 1);
+          }
+        },
+        { threshold: 0.5 },
+      );
+
+      if (node) observer.current.observe(node);
+    },
+    [loading, loadingMore, hasMore],
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0a0e1a] via-[#0d1526] to-[#0a1018] font-['Oswald','Arial_Narrow',sans-serif] pb-24 text-[#e8ecf5] mt-20">
+    <div className="min-h-screen bg-[#070a12] font-sans pb-24 text-[#e8ecf5] pt-24 selection:bg-[#c4e94c] selection:text-[#0a1018]">
+      <style>{`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+
       <Header navOpen={navOpen} setNavOpen={setNavOpen} />
 
-      <div className="max-w-[1200px] mx-auto px-6 pt-12">
+      <div className="max-w-7xl mx-auto px-6 pt-6">
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 text-[12px] tracking-[1.5px] font-semibold text-[#c4e94c] border border-[#c4e94c]/35 rounded-full py-2 px-[18px] mb-5 bg-[#c4e94c]/[0.06]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c4e94c] inline-block shadow-[0_0_8px_#c4e94c]" />
-            SEMUA PRODUK
+          <div className="inline-flex items-center gap-2 text-xs tracking-widest font-semibold text-[#c4e94c] border border-[#c4e94c]/30 rounded-full py-1.5 px-4 mb-4 bg-[#c4e94c]/5 backdrop-blur-sm">
+            <span className="w-2 h-2 rounded-full bg-[#c4e94c] animate-pulse shadow-[0_0_10px_#c4e94c]" />
+            KATALOG RESMI
           </div>
-          <h1 className="text-[32px] sm:text-[44px] font-bold tracking-[1px] m-0 mb-4 text-[#f5f7fb] uppercase">
-            KATALOG TRADING CARD GAME
+          <h1 className="text-3xl sm:text-5xl font-black tracking-wide mb-3 text-white uppercase font-['Oswald',sans-serif]">
+            TRADING CARD GAME
           </h1>
-          <p className="text-[15px] sm:text-[16px] text-[#9aa5bd] max-w-[640px] mx-auto leading-[1.6] font-sans font-normal">
+          <p className="text-sm sm:text-base text-[#9aa5bd] max-w-xl mx-auto leading-relaxed">
             Jelajahi seluruh koleksi kartu yang kami distribusikan secara resmi.
           </p>
         </div>
 
-        <div className="relative max-w-[480px] mx-auto mb-7">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[15px] opacity-60">
-            &#128269;
-          </span>
+        <div className="relative max-w-xl mx-auto mb-8">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#7c869e]">
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama kartu di seluruh toko..."
-            className="w-full box-border bg-[#111a2c] border border-[#23304a] rounded-full py-3.5 px-11 text-[14px] text-[#e8ecf5] outline-none font-sans focus:border-[#c4e94c] transition-colors"
+            placeholder="Cari nama kartu..."
+            className="w-full bg-[#0d1526]/80 border border-[#23304a] rounded-2xl py-3.5 pl-11 pr-10 text-sm text-[#e8ecf5] placeholder-[#626e87] outline-none focus:border-[#c4e94c] focus:ring-1 focus:ring-[#c4e94c]/50 transition-all shadow-inner"
           />
           {search && (
             <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-transparent border-none text-[#9aa5bd] text-[20px] cursor-pointer p-1 hover:text-white"
               onClick={() => setSearch("")}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#7c869e] hover:text-white transition-colors cursor-pointer"
             >
-              &times;
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           )}
         </div>
 
+        <div className="relative max-w-5xl mx-auto mb-8 group">
+          <button
+            onClick={() => scrollCategories("left")}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#0d1526]/90 border border-[#23304a] text-white shadow-lg hover:bg-[#c4e94c] hover:text-[#0a1018] hover:border-[#c4e94c] transition-all duration-200 -ml-4 opacity-0 group-hover:opacity-100 hidden sm:flex cursor-pointer"
+            aria-label="Scroll Kiri"
+          >
+            &#8249;
+          </button>
+
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#070a12] to-transparent z-1 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#070a12] to-transparent z-1 pointer-events-none" />
+
+          <div
+            ref={categoryScrollRef}
+            className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 px-4 scroll-smooth"
+          >
+            {categoriesList.map((cat) => {
+              const active = cat.name === category;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategoryChange(cat.name)}
+                  className={`rounded-xl py-2.5 px-5 text-xs font-bold tracking-wider cursor-pointer whitespace-nowrap transition-all duration-200 uppercase shrink-0 ${
+                    active
+                      ? "bg-[#c4e94c] text-[#0f1700] shadow-[0_4px_16px_rgba(196,233,76,0.25)] scale-105"
+                      : "bg-[#0d1526]/80 border border-[#23304a] text-[#9aa5bd] hover:border-[#c4e94c]/50 hover:text-white hover:bg-[#131f38]"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => scrollCategories("right")}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#0d1526]/90 border border-[#23304a] text-white shadow-lg hover:bg-[#c4e94c] hover:text-[#0a1018] hover:border-[#c4e94c] transition-all duration-200 -mr-4 opacity-0 group-hover:opacity-100 hidden sm:flex cursor-pointer"
+            aria-label="Scroll Kanan"
+          >
+            &#8250;
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-[#7c869e] mb-6 font-medium">
+          <span>
+            Menampilkan{" "}
+            <strong className="text-white">{products.length}</strong> dari{" "}
+            <strong className="text-white">{totalItems}</strong> produk
+          </span>
+          {category !== "Semua" && (
+            <span className="bg-[#182338] px-2.5 py-1 rounded-md border border-[#23304a] text-[#c4e94c]">
+              Kategori: {category}
+            </span>
+          )}
+        </div>
+
         {loading ? (
-          <div className="text-center py-16 px-5 border border-dashed border-[#23304a] rounded-2xl">
-            <p className="text-[18px] font-bold m-0 mb-2 text-[#f5f7fb]">
-              Memuat data...
-            </p>
-            <p className="text-[14px] text-[#7c869e] m-0 font-sans">
-              Sedang mengambil data kartu dari server.
-            </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="bg-[#0d1526]/40 border border-[#1b263b] rounded-2xl p-4 animate-pulse h-[360px] flex flex-col justify-between"
+              >
+                <div className="w-full h-48 bg-[#182338] rounded-xl mb-4" />
+                <div className="space-y-3">
+                  <div className="h-4 bg-[#182338] rounded w-3/4" />
+                  <div className="h-3 bg-[#182338] rounded w-1/2" />
+                </div>
+                <div className="h-8 bg-[#182338] rounded-xl mt-4" />
+              </div>
+            ))}
           </div>
         ) : error ? (
-          <div className="text-center py-16 px-5 border border-dashed border-[#23304a] rounded-2xl">
-            <p className="text-[18px] font-bold m-0 mb-2 text-[#ff6b6b]">
-              Gagal memuat produk
+          <div className="text-center py-16 px-6 border border-dashed border-red-500/30 rounded-2xl bg-red-500/5">
+            <p className="text-base font-bold text-red-400 mb-1">
+              Gagal Memuat Produk
             </p>
-            <p className="text-[14px] text-[#7c869e] m-0 font-sans">{error}</p>
+            <p className="text-xs text-[#7c869e]">{error}</p>
           </div>
-        ) : (
+        ) : products.length > 0 ? (
           <>
-            <div className="flex justify-start sm:justify-center flex-wrap gap-3 mb-8 overflow-x-auto pb-2 scrollbar-none">
-              {categoriesList.map((cat) => {
-                const active = cat.name === category;
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {products.map((product, index) => {
+                const isLastElement = products.length === index + 1;
                 return (
-                  <button
-                    key={cat.id}
-                    onClick={() => {
-                      setCategory(cat.name);
-                      setPage(1);
-                    }}
-                    className={`rounded-full py-3 px-6 text-[13px] font-semibold tracking-[0.5px] cursor-pointer whitespace-nowrap transition-all uppercase ${
-                      active
-                        ? "bg-[#c4e94c] border-transparent text-[#132000] shadow-[0_4px_14px_rgba(196,233,76,0.3)]"
-                        : "bg-[#111a2c] border border-[#23304a] text-[#9aa5bd] hover:border-[#c4e94c]/50 hover:text-white"
-                    }`}
+                  <div
+                    key={`${product.id}-${index}`}
+                    ref={isLastElement ? lastProductElementRef : null}
+                    className="transition-transform duration-200 hover:-translate-y-1"
                   >
-                    {cat.name}
-                  </button>
+                    <ProductCard product={product} />
+                  </div>
                 );
               })}
             </div>
 
-            <div className="text-[14px] text-[#9aa5bd] mb-5 font-sans font-semibold">
-              Total Produk: {totalItems} (Halaman {page} dari {totalPages})
-            </div>
-
-            {products.length > 0 ? (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
+            <div className="mt-12 text-center flex flex-col items-center justify-center">
+              {loadingMore && (
+                <div className="inline-flex items-center gap-3 bg-[#0d1526] border border-[#23304a] px-5 py-2.5 rounded-full text-xs font-semibold text-[#c4e94c] shadow-lg">
+                  <span className="w-3.5 h-3.5 border-2 border-[#c4e94c] border-t-transparent rounded-full animate-spin" />
+                  Memuat kartu tambahan...
                 </div>
+              )}
 
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-5 mt-10">
-                    <button
-                      onClick={handlePrevPage}
-                      disabled={page === 1}
-                      className={`bg-[#1c2740] border border-[#23304a] text-[#e8ecf5] py-2.5 px-5 rounded-lg text-[14px] font-semibold font-sans transition-all ${
-                        page === 1
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer hover:bg-[#23304a]"
-                      }`}
-                    >
-                      &#8592; Sebelumnya
-                    </button>
-                    <span className="text-[#9aa5bd] text-[15px] font-sans">
-                      Halaman {page} / {totalPages}
-                    </span>
-                    <button
-                      onClick={handleNextPage}
-                      disabled={page === totalPages}
-                      className={`bg-[#1c2740] border border-[#23304a] text-[#e8ecf5] py-2.5 px-5 rounded-lg text-[14px] font-semibold font-sans transition-all ${
-                        page === totalPages
-                          ? "opacity-50 cursor-not-allowed"
-                          : "cursor-pointer hover:bg-[#23304a]"
-                      }`}
-                    >
-                      Selanjutnya &#8594;
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-16 px-5 border border-dashed border-[#23304a] rounded-2xl">
-                <p className="text-[18px] font-bold m-0 mb-2 text-[#f5f7fb]">
-                  Produk tidak ditemukan
-                </p>
-                <p className="text-[14px] text-[#7c869e] m-0 mb-5 font-sans">
-                  Tidak ada kartu yang cocok dengan filter atau pencarian Anda.
-                </p>
+              {!hasMore && products.length > 0 && (
+                <div className="text-xs text-[#626e87] border-t border-[#1b263b] pt-8 w-full max-w-xs mx-auto">
+                  Semua kartu telah ditampilkan
+                </div>
+              )}
+
+              {hasMore && !loadingMore && (
                 <button
-                  className="bg-[#c4e94c] border-none rounded-full py-2.5 px-6 text-[13px] font-bold text-[#132000] cursor-pointer hover:bg-[#b0d53c] transition-colors"
-                  onClick={() => {
-                    setSearch("");
-                    setCategory("Semua");
-                    setPage(1);
-                  }}
+                  onClick={() => setPage((prev) => prev + 1)}
+                  className="mt-2 text-xs font-semibold text-[#9aa5bd] hover:text-[#c4e94c] transition-colors cursor-pointer border border-[#23304a] rounded-full px-6 py-2 bg-[#0d1526]/50 hover:border-[#c4e94c]/40"
                 >
-                  Reset Filter
+                  Muat Lebih Banyak
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </>
+        ) : (
+          <div className="text-center py-20 px-6 border border-dashed border-[#23304a] rounded-3xl bg-[#0d1526]/30 max-w-md mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-[#182338] flex items-center justify-center mx-auto mb-4 text-[#7c869e]">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h3 className="text-base font-bold text-white mb-1">
+              Produk Tidak Ditemukan
+            </h3>
+            <p className="text-xs text-[#7c869e] mb-6">
+              Tidak ada kartu yang sesuai dengan kata kunci atau filter pilihan
+              Anda.
+            </p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setCategory("Semua");
+              }}
+              className="bg-[#c4e94c] text-[#0f1700] rounded-xl py-2.5 px-6 text-xs font-bold hover:bg-[#b0d53c] transition-colors shadow-lg cursor-pointer"
+            >
+              Reset Semua Filter
+            </button>
+          </div>
         )}
       </div>
     </div>
