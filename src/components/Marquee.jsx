@@ -1,17 +1,22 @@
 import { useEffect, useState } from "react";
+import { MARQUEE_ITEMS } from "../data/content";
 
 export default function Marquee() {
-  const [items, setItems] = useState(["MEMUAT DATA...", "MEMUAT DATA..."]);
+  const [items, setItems] = useState(MARQUEE_ITEMS);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchCategoriesForMarquee = async () => {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_BASE_URL_API}/categories?limit=20`,
         );
+        if (!response.ok) return;
+
         const result = await response.json();
 
-        if (result.success && result.data && result.data.length > 0) {
+        if (isMounted && result.success && Array.isArray(result.data) && result.data.length > 0) {
           const categoryNames = result.data.map((cat) =>
             cat.name.toUpperCase(),
           );
@@ -23,6 +28,10 @@ export default function Marquee() {
     };
 
     fetchCategoriesForMarquee();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

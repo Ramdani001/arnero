@@ -33,11 +33,6 @@ export default function DrArneroCardShop() {
 
   return (
     <div className="min-h-screen relative bg-[#0c1730] text-[#f5f5f0] font-['Manrope',sans-serif] overflow-x-hidden selection:bg-[#bbe150] selection:text-[#12220a]">
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-      />
 
       <div className="fixed inset-0 z-0 pointer-events-none bg-[radial-gradient(1100px_620px_at_84%_-8%,rgba(187,225,80,0.16),transparent_60%),radial-gradient(900px_560px_at_6%_6%,rgba(52,87,153,0.35),transparent_55%),linear-gradient(180deg,#0c1730_0%,#0a1226_40%,#0c1730_100%]" />
       <div className="fixed inset-0 z-0 pointer-events-none opacity-30 bg-[linear-gradient(to_right,rgba(187,225,80,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(187,225,80,0.06)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(circle_at_50%_0%,black,transparent_75%)]" />

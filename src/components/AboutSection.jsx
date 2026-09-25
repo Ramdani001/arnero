@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 
+const DEFAULT_ABOUT = {
+  name: "Dedikasi Penuh untuk Dunia Trading Card Game",
+  content:
+    "Arnero Card Game Store hadir sebagai distributor dan pusat komunitas bagi para pemain kartu di Indonesia. Kami menghadirkan kartu-kartu resmi, turnamen berkala, dan dukungan penuh bagi toko kartu lokal.",
+};
+
 export default function AboutSection() {
-  const [sectionContent, setSectionContent] = useState({
-    name: "",
-    content: "",
-  });
+  const [sectionContent, setSectionContent] = useState(DEFAULT_ABOUT);
   const [kegiatanImages, setKegiatanImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,24 +20,27 @@ export default function AboutSection() {
       try {
         const baseUrl = import.meta.env.VITE_BASE_URL_API;
 
-        const [contentRes, imagesRes] = await Promise.all([
+        const [contentRes, imagesRes] = await Promise.allSettled([
           fetch(`${baseUrl}/compro/contents/by-category/SIAPA_KAMI`),
           fetch(
-            `${baseUrl}/compro/images?page=1&limit=1000000&sortBy=sort&sortOrder=asc&category=KEGIATAN`,
+            `${baseUrl}/compro/images?page=1&limit=50&sortBy=sort&sortOrder=asc&category=KEGIATAN`,
           ),
         ]);
 
-        const contentResult = await contentRes.json();
-        const imagesResult = await imagesRes.json();
+        if (!isMounted) return;
 
-        if (isMounted) {
+        if (contentRes.status === "fulfilled" && contentRes.value.ok) {
+          const contentResult = await contentRes.value.json();
           if (contentResult?.success && contentResult?.data) {
             setSectionContent({
-              name: contentResult.data.name || "",
-              content: contentResult.data.content || "",
+              name: contentResult.data.name || DEFAULT_ABOUT.name,
+              content: contentResult.data.content || DEFAULT_ABOUT.content,
             });
           }
+        }
 
+        if (imagesRes.status === "fulfilled" && imagesRes.value.ok) {
+          const imagesResult = await imagesRes.value.json();
           if (imagesResult?.success && Array.isArray(imagesResult.data)) {
             const activeImages = imagesResult.data.filter(
               (img) => img.isActive,
@@ -128,7 +134,7 @@ export default function AboutSection() {
             </div>
 
             <button
-              onClick={() => handleScroll("kanan")}
+              onClick={() => handleScroll("right")}
               className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-[#0c1730]/90 border border-[#bbe150]/40 text-[#bbe150] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg hover:bg-[#bbe150] hover:text-[#12220a] cursor-pointer"
               aria-label="Scroll Kanan"
             >

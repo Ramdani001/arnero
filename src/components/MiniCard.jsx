@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import CardArt from "./CardArt";
 
 export default function MiniCard({ name, tag, seed, imageUrl, price }) {

@@ -1,31 +1,46 @@
 import { useEffect, useState } from "react";
 
+const DEFAULT_STORE = {
+  name: "Arnero Card Game Store\nJakarta, Indonesia",
+  content: "-6.200000,106.816666",
+};
+
 export default function StoreAddressSection() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(DEFAULT_STORE);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchStoreAddress = async () => {
       try {
         const res = await fetch(
           `${import.meta.env.VITE_BASE_URL_API}/compro/contents?sort=-1`,
         );
+        if (!res.ok) return;
+
         const json = await res.json();
 
-        if (json.success && json.data) {
+        if (isMounted && json.success && json.data) {
           const targetData = Array.isArray(json.data)
             ? json.data[0]
             : json.data;
-          setData(targetData);
+          if (targetData) {
+            setData(targetData);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch store address:", error);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     fetchStoreAddress();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {
@@ -36,10 +51,9 @@ export default function StoreAddressSection() {
     );
   }
 
-  if (!data) return null;
-
-  const [lat, lng] = data.content
-    ? data.content.split(",")
+  const storeInfo = data || DEFAULT_STORE;
+  const [lat, lng] = storeInfo.content
+    ? storeInfo.content.split(",")
     : ["-6.200000", "106.816666"];
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   const mapEmbedUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=id&z=16&output=embed`;

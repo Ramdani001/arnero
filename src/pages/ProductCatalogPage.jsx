@@ -35,10 +35,13 @@ export default function ProductCatalogPage() {
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchCategories = async () => {
       try {
         const response = await fetch(
           `${import.meta.env.VITE_BASE_URL_API}/categories?limit=50`,
+          { signal: controller.signal },
         );
         const result = await response.json();
 
@@ -49,17 +52,27 @@ export default function ProductCatalogPage() {
           ]);
         }
       } catch (err) {
-        console.error("Gagal memuat kategori:", err);
+        if (err.name !== "AbortError") {
+          console.error("Gagal memuat kategori:", err);
+        }
       }
     };
 
     fetchCategories();
+
+    return () => controller.abort();
   }, []);
 
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setProducts([]);
       setPage(1);
       setHasMore(true);
     }, 400);
@@ -70,12 +83,13 @@ export default function ProductCatalogPage() {
   const handleCategoryChange = (catName) => {
     if (catName === category) return;
     setCategory(catName);
-    setProducts([]);
     setPage(1);
     setHasMore(true);
   };
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchCards = async () => {
       if (page === 1) {
         setLoading(true);
@@ -95,7 +109,7 @@ export default function ProductCatalogPage() {
           url += `&categories=${encodeURIComponent(category)}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, { signal: controller.signal });
 
         if (!response.ok) {
           throw new Error(`Error: ${response.status} ${response.statusText}`);
@@ -117,7 +131,9 @@ export default function ProductCatalogPage() {
           throw new Error(result.message || "Gagal mengambil data");
         }
       } catch (err) {
-        setError(err.message);
+        if (err.name !== "AbortError") {
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
         setLoadingMore(false);
@@ -125,7 +141,17 @@ export default function ProductCatalogPage() {
     };
 
     fetchCards();
+
+    return () => controller.abort();
   }, [page, debouncedSearch, category]);
+
+  useEffect(() => {
+    return () => {
+      if (observer.current) {
+        observer.current.disconnect();
+      }
+    };
+  }, []);
 
   const lastProductElementRef = useCallback(
     (node) => {
@@ -148,16 +174,6 @@ export default function ProductCatalogPage() {
 
   return (
     <div className="min-h-screen bg-[#070a12] font-sans pb-24 text-[#e8ecf5] pt-24 selection:bg-[#c4e94c] selection:text-[#0a1018]">
-      <style>{`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-
       <Header navOpen={navOpen} setNavOpen={setNavOpen} />
 
       <div className="max-w-7xl mx-auto px-6 pt-6">
@@ -192,6 +208,7 @@ export default function ProductCatalogPage() {
           </div>
           <input
             type="text"
+            aria-label="Cari nama kartu"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama kartu..."
@@ -200,6 +217,7 @@ export default function ProductCatalogPage() {
           {search && (
             <button
               onClick={() => setSearch("")}
+              aria-label="Hapus kata kunci pencarian"
               className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#7c869e] hover:text-white transition-colors cursor-pointer"
             >
               <svg
@@ -366,7 +384,9 @@ export default function ProductCatalogPage() {
             <button
               onClick={() => {
                 setSearch("");
+                setDebouncedSearch("");
                 setCategory("Semua");
+                setPage(1);
               }}
               className="bg-[#c4e94c] text-[#0f1700] rounded-xl py-2.5 px-6 text-xs font-bold hover:bg-[#b0d53c] transition-colors shadow-lg cursor-pointer"
             >

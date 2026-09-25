@@ -57,10 +57,20 @@ export default function ContactSection() {
 
     const { firstName, lastName, email, message } = formData;
 
-    if (!firstName || !email || !message) {
+    if (!firstName.trim() || !email.trim() || !message.trim()) {
       setStatusMessage({
         type: "error",
-        text: "Mohon isi Nama Depan, Email, dan Pesan Anda.",
+        text: "Mohon lengkapi Nama Depan, Email, dan Pesan Anda.",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setStatusMessage({
+        type: "error",
+        text: "Format email tidak valid. Mohon periksa kembali.",
       });
       setLoading(false);
       return;
@@ -73,10 +83,10 @@ export default function ContactSection() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          firstName,
-          lastName,
-          email,
-          message,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+          message: message.trim(),
           recipient: "arnerocardgame@gmail.com",
         }),
       });
@@ -103,7 +113,7 @@ export default function ContactSection() {
         `Nama: ${firstName} ${lastName}\nEmail Pengirim: ${email}\n\nPesan:\n${message}`,
       );
 
-      window.location.href = `mailto:arnerocardgame@gmail.com?subject=${subject}&body=${body}`;
+      window.location.assign(`mailto:arnerocardgame@gmail.com?subject=${subject}&body=${body}`);
 
       setStatusMessage({
         type: "success",
@@ -264,6 +274,7 @@ export default function ContactSection() {
             <input
               type="text"
               name="firstName"
+              aria-label="Nama Depan"
               value={formData.firstName}
               onChange={handleChange}
               placeholder="Nama Depan"
@@ -273,6 +284,7 @@ export default function ContactSection() {
             <input
               type="text"
               name="lastName"
+              aria-label="Nama Belakang"
               value={formData.lastName}
               onChange={handleChange}
               placeholder="Nama Belakang"
@@ -281,6 +293,7 @@ export default function ContactSection() {
             <input
               type="email"
               name="email"
+              aria-label="Alamat Email"
               value={formData.email}
               onChange={handleChange}
               placeholder="Email Anda"
@@ -290,6 +303,7 @@ export default function ContactSection() {
             <textarea
               rows={4}
               name="message"
+              aria-label="Pesan Anda"
               value={formData.message}
               onChange={handleChange}
               placeholder="Pesan Anda"

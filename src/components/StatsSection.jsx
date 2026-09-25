@@ -14,23 +14,34 @@ export default function StatsSection() {
       try {
         const baseUrl = import.meta.env.VITE_BASE_URL_API;
 
-        const [shopsRes, eventsRes] = await Promise.all([
+        const [shopsRes, eventsRes] = await Promise.allSettled([
           fetch(`${baseUrl}/shops?page=1&limit=1`),
           fetch(`${baseUrl}/events?page=1&limit=1`),
         ]);
 
-        const shopsResult = await shopsRes.json();
-        const eventsResult = await eventsRes.json();
+        if (!isMounted) return;
 
-        const totalShops = Number(shopsResult.metadata?.total ?? 3);
-        const totalEvents = Number(eventsResult.metadata?.total ?? 5);
+        let totalShops = 82;
+        let totalEvents = 25;
 
-        if (isMounted) {
-          setStatsData([
-            { target: totalShops, label: "Card Shops" },
-            { target: totalEvents, label: "Events" },
-          ]);
+        if (shopsRes.status === "fulfilled" && shopsRes.value.ok) {
+          const shopsResult = await shopsRes.value.json();
+          if (shopsResult.metadata?.total !== undefined) {
+            totalShops = Number(shopsResult.metadata.total);
+          }
         }
+
+        if (eventsRes.status === "fulfilled" && eventsRes.value.ok) {
+          const eventsResult = await eventsRes.value.json();
+          if (eventsResult.metadata?.total !== undefined) {
+            totalEvents = Number(eventsResult.metadata.total);
+          }
+        }
+
+        setStatsData([
+          { target: totalShops, label: "Card Shops" },
+          { target: totalEvents, label: "Events" },
+        ]);
       } catch (error) {
         console.error("Gagal memuat statistik dari API:", error);
       }

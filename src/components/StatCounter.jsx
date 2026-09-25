@@ -8,6 +8,8 @@ export default function StatCounter({ target, label }) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    let timer = null;
+
     const io = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -15,11 +17,12 @@ export default function StatCounter({ target, label }) {
             done.current = true;
             const step = Math.max(1, Math.round(target / 60));
             let cur = 0;
-            const t = setInterval(() => {
+            timer = setInterval(() => {
               cur += step;
               if (cur >= target) {
                 cur = target;
-                clearInterval(t);
+                clearInterval(timer);
+                timer = null;
               }
               setCount(cur);
             }, 20);
@@ -30,7 +33,11 @@ export default function StatCounter({ target, label }) {
       { threshold: 0.4 },
     );
     io.observe(el);
-    return () => io.disconnect();
+
+    return () => {
+      if (timer) clearInterval(timer);
+      io.disconnect();
+    };
   }, [target]);
 
   return (

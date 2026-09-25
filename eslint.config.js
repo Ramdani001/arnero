@@ -34,7 +34,7 @@ export default [
         "warn",
         { allowConstantExport: true },
       ],
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }], // Toleransi variabel dengan awalan underscore
+      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
     settings: {
       react: {

@@ -3,13 +3,21 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 const FALLBACK_LOGO = "/Logo.jpeg";
 
+const DEFAULT_NAV_LINKS = [
+  { id: "kegiatan", label: "Kegiatan", url: "/#kegiatan" },
+  { id: "produk", label: "Produk", url: "/#produk" },
+  { id: "lokasi", label: "Lokasi", url: "/#location" },
+  { id: "partner", label: "Partner", url: "/#partner" },
+  { id: "katalog", label: "Katalog", url: "/products" },
+];
+
 export default function Header({ navOpen, setNavOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [headerTitle, setHeaderTitle] = useState("");
-  const [navLinks, setNavLinks] = useState([]);
-  const [loadingMenus, setLoadingMenus] = useState(true);
+  const [navLinks, setNavLinks] = useState(DEFAULT_NAV_LINKS);
+  const [loadingMenus, setLoadingMenus] = useState(false);
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -26,26 +34,31 @@ export default function Header({ navOpen, setNavOpen }) {
       try {
         const baseUrl = import.meta.env.VITE_BASE_URL_API;
 
-        const [titleRes, menusRes] = await Promise.all([
+        const [titleRes, menusRes] = await Promise.allSettled([
           fetch(`${baseUrl}/compro/contents/by-category/HEADER_TITLE`),
           fetch(
-            `${baseUrl}/menus?page=1&limit=1000000&sortBy=order&sortOrder=asc&category=COMPANY_PROFILE`,
+            `${baseUrl}/menus?page=1&limit=50&sortBy=order&sortOrder=asc&category=COMPANY_PROFILE`,
           ),
         ]);
 
-        const titleResult = await titleRes.json();
-        const menusResult = await menusRes.json();
+        if (!isMounted) return;
 
-        if (isMounted) {
+        if (titleRes.status === "fulfilled" && titleRes.value.ok) {
+          const titleResult = await titleRes.value.json();
           if (titleResult?.success && titleResult?.data?.content) {
             setHeaderTitle(titleResult.data.content);
           }
+        }
 
+        if (menusRes.status === "fulfilled" && menusRes.value.ok) {
+          const menusResult = await menusRes.value.json();
           if (menusResult?.success && Array.isArray(menusResult.data)) {
             const activeMenus = menusResult.data.filter(
               (item) => item.isActive,
             );
-            setNavLinks(activeMenus);
+            if (activeMenus.length > 0) {
+              setNavLinks(activeMenus);
+            }
           }
         }
       } catch (error) {
@@ -84,7 +97,7 @@ export default function Header({ navOpen, setNavOpen }) {
     }
 
     if (targetUrl.startsWith("http://") || targetUrl.startsWith("https://")) {
-      window.location.href = targetUrl;
+      window.location.assign(targetUrl);
     } else {
       navigate(targetUrl);
     }
@@ -113,7 +126,7 @@ export default function Header({ navOpen, setNavOpen }) {
           <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-[#bbe150]/20 shadow-sm transition-transform duration-300 group-hover:scale-105 group-hover:border-[#bbe150]/50">
             <img
               src="/Logo.jpeg"
-              alt="Logo"
+              alt="Arnero Card Game Store Logo"
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.src = FALLBACK_LOGO;

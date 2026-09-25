@@ -1,12 +1,20 @@
-import React, { useRef, useCallback, useEffect, useState } from "react";
+import { useRef, useCallback, useEffect, useState } from "react";
 import CardArt from "./CardArt";
+
+const DEFAULT_HERO_CONTENT = {
+  title: "DISTRIBUTOR RESMI KARTU TCG TERBESAR",
+  name: "DISTRIBUTOR RESMI KARTU TCG TERBESAR",
+  subtitle: "TOKO KARTU RESMI — INDONESIA",
+  content:
+    "Menyediakan kartu orisinal Yu-Gi-Oh!, Duel Masters, dan berbagai TCG ternama dengan jaminan keaslian 100% dan harga terbaik untuk komunitas di Indonesia.",
+};
 
 export default function Hero() {
   const stageRef = useRef(null);
   const cardRef = useRef(null);
 
   const [topCards, setTopCards] = useState([]);
-  const [heroContent, setHeroContent] = useState(null);
+  const [heroContent, setHeroContent] = useState(DEFAULT_HERO_CONTENT);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,7 +22,7 @@ export default function Hero() {
 
     const fetchHeroData = async () => {
       try {
-        const [cardsRes, contentRes] = await Promise.all([
+        const [cardsRes, contentRes] = await Promise.allSettled([
           fetch(
             `${import.meta.env.VITE_BASE_URL_API}/cards?page=1&limit=2&sortBy=price&sortOrder=desc`,
           ),
@@ -23,15 +31,19 @@ export default function Hero() {
           ),
         ]);
 
-        const cardsResult = await cardsRes.json();
-        const contentResult = await contentRes.json();
+        if (!isMounted) return;
 
-        if (isMounted) {
-          if (cardsResult.success && cardsResult.data) {
+        if (cardsRes.status === "fulfilled" && cardsRes.value.ok) {
+          const cardsResult = await cardsRes.value.json();
+          if (cardsResult.success && Array.isArray(cardsResult.data) && cardsResult.data.length > 0) {
             setTopCards(cardsResult.data);
           }
+        }
+
+        if (contentRes.status === "fulfilled" && contentRes.value.ok) {
+          const contentResult = await contentRes.value.json();
           if (contentResult.success && contentResult.data) {
-            setHeroContent(contentResult.data);
+            setHeroContent((prev) => ({ ...prev, ...contentResult.data }));
           }
         }
       } catch (error) {
