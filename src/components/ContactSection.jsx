@@ -60,7 +60,7 @@ export default function ContactSection() {
     if (!firstName.trim() || !email.trim() || !message.trim()) {
       setStatusMessage({
         type: "error",
-        text: "Mohon lengkapi Nama Depan, Email, dan Pesan Anda.",
+        text: "Mohon isi Nama Depan, Email, dan Pesan Anda.",
       });
       setLoading(false);
       return;

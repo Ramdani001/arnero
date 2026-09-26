@@ -3,21 +3,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 const FALLBACK_LOGO = "/Logo.jpeg";
 
-const DEFAULT_NAV_LINKS = [
-  { id: "kegiatan", label: "Kegiatan", url: "/#kegiatan" },
-  { id: "produk", label: "Produk", url: "/#produk" },
-  { id: "lokasi", label: "Lokasi", url: "/#location" },
-  { id: "partner", label: "Partner", url: "/#partner" },
-  { id: "katalog", label: "Katalog", url: "/products" },
-];
-
 export default function Header({ navOpen, setNavOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [headerTitle, setHeaderTitle] = useState("");
-  const [navLinks, setNavLinks] = useState(DEFAULT_NAV_LINKS);
-  const [loadingMenus, setLoadingMenus] = useState(false);
+  const [navLinks, setNavLinks] = useState([]);
+  const [loadingMenus, setLoadingMenus] = useState(true);
 
   useEffect(() => {
     const originalStyle = window.getComputedStyle(document.body).overflow;
@@ -56,9 +48,7 @@ export default function Header({ navOpen, setNavOpen }) {
             const activeMenus = menusResult.data.filter(
               (item) => item.isActive,
             );
-            if (activeMenus.length > 0) {
-              setNavLinks(activeMenus);
-            }
+            setNavLinks(activeMenus);
           }
         }
       } catch (error) {

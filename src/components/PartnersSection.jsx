@@ -1,15 +1,8 @@
 import { useEffect, useState } from "react";
 
-const DEFAULT_PARTNERS = [
-  { id: "p1", name: "KONAMI" },
-  { id: "p2", name: "TAKARA TOMY" },
-  { id: "p3", name: "BUSHIROAD" },
-  { id: "p4", name: "BANDAI" },
-];
-
 export default function PartnersSection() {
-  const [shops, setShops] = useState(DEFAULT_PARTNERS);
-  const [loading, setLoading] = useState(false);
+  const [shops, setShops] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -17,14 +10,12 @@ export default function PartnersSection() {
     const fetchShops = async () => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_BASE_URL_API}/shops?page=1&limit=8`,
+          `${import.meta.env.VITE_BASE_URL_API}/shops?page=1&limit=4`,
         );
-        if (!response.ok) return;
-
         const result = await response.json();
 
-        if (isMounted && result.success && Array.isArray(result.data) && result.data.length > 0) {
-          setShops(result.data);
+        if (isMounted && result.success) {
+          setShops(result.data || []);
         }
       } catch (error) {
         console.error("Gagal memuat data partner/toko:", error);

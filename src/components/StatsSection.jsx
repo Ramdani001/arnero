@@ -21,8 +21,8 @@ export default function StatsSection() {
 
         if (!isMounted) return;
 
-        let totalShops = 82;
-        let totalEvents = 25;
+        let totalShops = 3;
+        let totalEvents = 5;
 
         if (shopsRes.status === "fulfilled" && shopsRes.value.ok) {
           const shopsResult = await shopsRes.value.json();

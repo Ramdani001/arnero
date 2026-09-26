@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { formatRupiah } from "../utils/helpers";
 
 export function ProductCard({ product }) {
@@ -8,13 +9,16 @@ export function ProductCard({ product }) {
   const displayCategory = product.categories?.[0]?.category?.name || "Lainnya";
 
   return (
-    <div className="bg-[#111a2c] border border-[#1c2740] rounded-[14px] overflow-hidden flex flex-col transition-all duration-300 hover:border-[#c4e94c]/40 hover:-translate-y-1 shadow-md">
-      <div className="w-full h-[220px] bg-[#0d1526] flex items-center justify-center overflow-hidden border-b border-[#1c2740] relative">
+    <Link
+      to={`/products/${product.id}`}
+      className="bg-[#111a2c] border border-[#1c2740] rounded-[14px] overflow-hidden flex flex-col transition-all duration-300 hover:border-[#c4e94c]/60 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(0,0,0,0.5)] shadow-md group block h-full select-none cursor-pointer"
+    >
+      <div className="w-full h-[220px] bg-[#0d1526] flex items-center justify-center overflow-hidden border-b border-[#1c2740] relative group-hover:bg-[#0f1930] transition-colors">
         {primaryImage ? (
           <img
             src={primaryImage}
             alt={product.name}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             loading="lazy"
           />
         ) : (
@@ -22,7 +26,7 @@ export function ProductCard({ product }) {
         )}
       </div>
       <div className="p-[18px] flex flex-col flex-grow justify-between">
-        <h3 className="text-[16px] font-bold tracking-[0.5px] mb-4 text-[#f5f7fb] line-clamp-2">
+        <h3 className="text-[16px] font-bold tracking-[0.5px] mb-4 text-[#f5f7fb] line-clamp-2 group-hover:text-[#c4e94c] transition-colors">
           {product.name?.toUpperCase()}
         </h3>
         <div className="flex justify-between items-end gap-2">
@@ -34,6 +38,6 @@ export function ProductCard({ product }) {
           </span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

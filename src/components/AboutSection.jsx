@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
-const DEFAULT_ABOUT = {
-  name: "Dedikasi Penuh untuk Dunia Trading Card Game",
-  content:
-    "Arnero Card Game Store hadir sebagai distributor dan pusat komunitas bagi para pemain kartu di Indonesia. Kami menghadirkan kartu-kartu resmi, turnamen berkala, dan dukungan penuh bagi toko kartu lokal.",
-};
-
 export default function AboutSection() {
-  const [sectionContent, setSectionContent] = useState(DEFAULT_ABOUT);
+  const [sectionContent, setSectionContent] = useState({
+    name: "",
+    content: "",
+  });
   const [kegiatanImages, setKegiatanImages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +30,8 @@ export default function AboutSection() {
           const contentResult = await contentRes.value.json();
           if (contentResult?.success && contentResult?.data) {
             setSectionContent({
-              name: contentResult.data.name || DEFAULT_ABOUT.name,
-              content: contentResult.data.content || DEFAULT_ABOUT.content,
+              name: contentResult.data.name || "",
+              content: contentResult.data.content || "",
             });
           }
         }

@@ -1,20 +1,12 @@
 import { useRef, useCallback, useEffect, useState } from "react";
 import CardArt from "./CardArt";
 
-const DEFAULT_HERO_CONTENT = {
-  title: "DISTRIBUTOR RESMI KARTU TCG TERBESAR",
-  name: "DISTRIBUTOR RESMI KARTU TCG TERBESAR",
-  subtitle: "TOKO KARTU RESMI — INDONESIA",
-  content:
-    "Menyediakan kartu orisinal Yu-Gi-Oh!, Duel Masters, dan berbagai TCG ternama dengan jaminan keaslian 100% dan harga terbaik untuk komunitas di Indonesia.",
-};
-
 export default function Hero() {
   const stageRef = useRef(null);
   const cardRef = useRef(null);
 
   const [topCards, setTopCards] = useState([]);
-  const [heroContent, setHeroContent] = useState(DEFAULT_HERO_CONTENT);
+  const [heroContent, setHeroContent] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,7 +35,7 @@ export default function Hero() {
         if (contentRes.status === "fulfilled" && contentRes.value.ok) {
           const contentResult = await contentRes.value.json();
           if (contentResult.success && contentResult.data) {
-            setHeroContent((prev) => ({ ...prev, ...contentResult.data }));
+            setHeroContent(contentResult.data);
           }
         }
       } catch (error) {

@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { MARQUEE_ITEMS } from "../data/content";
 
 export default function Marquee() {
-  const [items, setItems] = useState(MARQUEE_ITEMS);
+  const [items, setItems] = useState(["MEMUAT DATA...", "MEMUAT DATA..."]);
 
   useEffect(() => {
     let isMounted = true;
@@ -16,7 +15,12 @@ export default function Marquee() {
 
         const result = await response.json();
 
-        if (isMounted && result.success && Array.isArray(result.data) && result.data.length > 0) {
+        if (
+          isMounted &&
+          result.success &&
+          Array.isArray(result.data) &&
+          result.data.length > 0
+        ) {
           const categoryNames = result.data.map((cat) =>
             cat.name.toUpperCase(),
           );

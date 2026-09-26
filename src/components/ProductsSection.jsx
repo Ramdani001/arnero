@@ -2,16 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import MiniCard from "./MiniCard";
 
-const DEFAULT_PRODUCTS_CONTENT = {
-  name: "Koleksi Trading Card Game Pilihan",
-  content:
-    "Dapatkan booster pack, single card incaran, dan structure deck resmi berkualitas dengan penawaran terbaik.",
-};
-
 export default function ProductsSection() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [sectionContent, setSectionContent] = useState(DEFAULT_PRODUCTS_CONTENT);
+
+  const [sectionContent, setSectionContent] = useState({
+    name: "",
+    content: "",
+  });
 
   const navigate = useNavigate();
 
@@ -44,8 +42,8 @@ export default function ProductsSection() {
           const contentResult = await contentRes.value.json();
           if (contentResult.success && contentResult.data) {
             setSectionContent({
-              name: contentResult.data.name || DEFAULT_PRODUCTS_CONTENT.name,
-              content: contentResult.data.content || DEFAULT_PRODUCTS_CONTENT.content,
+              name: contentResult.data.name || "Koleksi Trading Card Game",
+              content: contentResult.data.content || "",
             });
           }
         }
@@ -112,6 +110,7 @@ export default function ProductsSection() {
               return (
                 <MiniCard
                   key={product.id}
+                  id={product.id}
                   name={product.name}
                   tag={categoryName}
                   imageUrl={imageUrl}
@@ -121,20 +120,9 @@ export default function ProductsSection() {
               );
             })
           ) : (
-            [
-              { id: "f1", name: "Voltguard Dragon", tag: "Yu-Gi-Oh!", price: "Rp 150.000" },
-              { id: "f2", name: "Thundersear Wyrm", tag: "Duel Masters", price: "Rp 120.000" },
-              { id: "f3", name: "Solar Phoenix Ace", tag: "Yu-Gi-Oh!", price: "Rp 250.000" },
-              { id: "f4", name: "Crystal Warden", tag: "TCG Lainnya", price: "Rp 95.000" },
-            ].map((p, i) => (
-              <MiniCard
-                key={p.id}
-                name={p.name}
-                tag={p.tag}
-                price={p.price}
-                seed={i}
-              />
-            ))
+            <p className="text-center w-full col-span-full text-[#9aa5bd] py-8">
+              Belum ada produk.
+            </p>
           )}
         </div>
 

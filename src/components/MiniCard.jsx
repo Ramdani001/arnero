@@ -1,8 +1,16 @@
 import { useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import CardArt from "./CardArt";
 
-export default function MiniCard({ name, tag, seed, imageUrl, price }) {
+export default function MiniCard({ id, name, tag, seed, imageUrl, price }) {
+  const navigate = useNavigate();
   const ref = useRef(null);
+
+  const handleClick = () => {
+    if (id) {
+      navigate(`/products/${id}`);
+    }
+  };
 
   const onMove = (e) => {
     const el = ref.current;
@@ -19,7 +27,8 @@ export default function MiniCard({ name, tag, seed, imageUrl, price }) {
 
   return (
     <div
-      className="bg-[#16264a] border border-[#bbe150]/18 rounded-[14px] p-4 transition-all duration-300 ease-out shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] [transform-style:preserve-3d] cursor-pointer flex flex-col h-full"
+      onClick={handleClick}
+      className="bg-[#16264a] border border-[#bbe150]/18 rounded-[14px] p-4 transition-all duration-300 ease-out shadow-sm hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:border-[#bbe150]/50 [transform-style:preserve-3d] cursor-pointer flex flex-col h-full"
       ref={ref}
       onMouseMove={onMove}
       onMouseLeave={onLeave}

@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 
-const DEFAULT_STORE = {
-  name: "Arnero Card Game Store\nJakarta, Indonesia",
-  content: "-6.200000,106.816666",
-};
-
 export default function StoreAddressSection() {
-  const [data, setData] = useState(DEFAULT_STORE);
-  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -25,9 +20,7 @@ export default function StoreAddressSection() {
           const targetData = Array.isArray(json.data)
             ? json.data[0]
             : json.data;
-          if (targetData) {
-            setData(targetData);
-          }
+          setData(targetData);
         }
       } catch (error) {
         console.error("Failed to fetch store address:", error);
@@ -51,9 +44,10 @@ export default function StoreAddressSection() {
     );
   }
 
-  const storeInfo = data || DEFAULT_STORE;
-  const [lat, lng] = storeInfo.content
-    ? storeInfo.content.split(",")
+  if (!data) return null;
+
+  const [lat, lng] = data.content
+    ? data.content.split(",")
     : ["-6.200000", "106.816666"];
   const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
   const mapEmbedUrl = `https://maps.google.com/maps?q=${lat},${lng}&hl=id&z=16&output=embed`;

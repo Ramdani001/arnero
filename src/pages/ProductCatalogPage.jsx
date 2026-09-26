@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Header from "../components/Header";
+import Footer from "../components/Footer";
 import { ProductCard } from "../components/ProductCard";
 
 export default function ProductCatalogPage() {
@@ -23,16 +24,6 @@ export default function ProductCatalogPage() {
 
   const observer = useRef();
   const categoryScrollRef = useRef(null);
-
-  const scrollCategories = (direction) => {
-    if (categoryScrollRef.current) {
-      const scrollAmount = direction === "left" ? -240 : 240;
-      categoryScrollRef.current.scrollBy({
-        left: scrollAmount,
-        behavior: "smooth",
-      });
-    }
-  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -173,10 +164,10 @@ export default function ProductCatalogPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#070a12] font-sans pb-24 text-[#e8ecf5] pt-24 selection:bg-[#c4e94c] selection:text-[#0a1018]">
+    <div className="min-h-screen bg-[#070a12] font-sans text-[#e8ecf5] pt-24 selection:bg-[#c4e94c] selection:text-[#0a1018] flex flex-col justify-between">
       <Header navOpen={navOpen} setNavOpen={setNavOpen} />
 
-      <div className="max-w-7xl mx-auto px-6 pt-6">
+      <div className="max-w-7xl mx-auto px-6 pt-6 pb-20 w-full flex-grow">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 text-xs tracking-widest font-semibold text-[#c4e94c] border border-[#c4e94c]/30 rounded-full py-1.5 px-4 mb-4 bg-[#c4e94c]/5 backdrop-blur-sm">
             <span className="w-2 h-2 rounded-full bg-[#c4e94c] animate-pulse shadow-[0_0_10px_#c4e94c]" />
@@ -237,60 +228,74 @@ export default function ProductCatalogPage() {
           )}
         </div>
 
-        <div className="relative max-w-5xl mx-auto mb-8 group">
-          <button
-            onClick={() => scrollCategories("left")}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#0d1526]/90 border border-[#23304a] text-white shadow-lg hover:bg-[#c4e94c] hover:text-[#0a1018] hover:border-[#c4e94c] transition-all duration-200 -ml-4 opacity-0 group-hover:opacity-100 hidden sm:flex cursor-pointer"
-            aria-label="Scroll Kiri"
-          >
-            &#8249;
-          </button>
-
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#070a12] to-transparent z-1 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#070a12] to-transparent z-1 pointer-events-none" />
-
-          <div
-            ref={categoryScrollRef}
-            className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 px-4 scroll-smooth"
-          >
-            {categoriesList.map((cat) => {
-              const active = cat.name === category;
-              return (
-                <button
-                  key={cat.id}
-                  onClick={() => handleCategoryChange(cat.name)}
-                  className={`rounded-xl py-2.5 px-5 text-xs font-bold tracking-wider cursor-pointer whitespace-nowrap transition-all duration-200 uppercase shrink-0 ${
-                    active
-                      ? "bg-[#c4e94c] text-[#0f1700] shadow-[0_4px_16px_rgba(196,233,76,0.25)] scale-105"
-                      : "bg-[#0d1526]/80 border border-[#23304a] text-[#9aa5bd] hover:border-[#c4e94c]/50 hover:text-white hover:bg-[#131f38]"
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
+        {/* Category Filter Pills */}
+        <div className="max-w-5xl mx-auto mb-8">
+          <div className="relative">
+            <div
+              ref={categoryScrollRef}
+              className="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth py-2 px-1 sm:flex-wrap sm:justify-center"
+            >
+              {categoriesList.map((cat) => {
+                const active = cat.name === category;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={(e) => {
+                      handleCategoryChange(cat.name);
+                      e.currentTarget.scrollIntoView({
+                        behavior: "smooth",
+                        inline: "center",
+                        block: "nearest",
+                      });
+                    }}
+                    className={`rounded-xl py-2 px-3.5 sm:px-4 text-xs font-bold tracking-wider cursor-pointer whitespace-nowrap transition-all duration-200 uppercase shrink-0 flex items-center gap-1.5 ${
+                      active
+                        ? "bg-[#c4e94c] text-[#0f1700] shadow-[0_0_18px_rgba(196,233,76,0.3)] border border-[#c4e94c] scale-105"
+                        : "bg-[#0d1526]/85 border border-[#202d44] text-[#94a3c4] hover:border-[#c4e94c]/60 hover:text-white hover:bg-[#131f38] hover:-translate-y-0.5"
+                    }`}
+                  >
+                    {active && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0f1700]" />
+                    )}
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-
-          <button
-            onClick={() => scrollCategories("right")}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-[#0d1526]/90 border border-[#23304a] text-white shadow-lg hover:bg-[#c4e94c] hover:text-[#0a1018] hover:border-[#c4e94c] transition-all duration-200 -mr-4 opacity-0 group-hover:opacity-100 hidden sm:flex cursor-pointer"
-            aria-label="Scroll Kanan"
-          >
-            &#8250;
-          </button>
         </div>
 
-        <div className="flex items-center justify-between text-xs text-[#7c869e] mb-6 font-medium">
+        {/* Active Filters & Counter Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-[#7c869e] mb-6 font-medium border-b border-[#1b263b]/70 pb-3">
           <span>
             Menampilkan{" "}
             <strong className="text-white">{products.length}</strong> dari{" "}
             <strong className="text-white">{totalItems}</strong> produk
           </span>
-          {category !== "Semua" && (
-            <span className="bg-[#182338] px-2.5 py-1 rounded-md border border-[#23304a] text-[#c4e94c]">
-              Kategori: {category}
-            </span>
-          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            {category !== "Semua" && (
+              <button
+                onClick={() => handleCategoryChange("Semua")}
+                className="inline-flex items-center gap-1.5 bg-[#182338] hover:bg-[#202f4a] px-3 py-1 rounded-lg border border-[#23304a] text-[#c4e94c] transition-all cursor-pointer group"
+                title="Hapus filter kategori"
+              >
+                <span>Kategori: <strong>{category}</strong></span>
+                <span className="text-[#7c869e] group-hover:text-white transition-colors ml-1 font-bold">✕</span>
+              </button>
+            )}
+
+            {debouncedSearch && (
+              <button
+                onClick={() => setSearch("")}
+                className="inline-flex items-center gap-1.5 bg-[#182338] hover:bg-[#202f4a] px-3 py-1 rounded-lg border border-[#23304a] text-[#c4e94c] transition-all cursor-pointer group"
+                title="Hapus filter pencarian"
+              >
+                <span>Cari: <strong>{debouncedSearch}</strong></span>
+                <span className="text-[#7c869e] group-hover:text-white transition-colors ml-1 font-bold">✕</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -395,6 +400,8 @@ export default function ProductCatalogPage() {
           </div>
         )}
       </div>
+
+      <Footer />
     </div>
   );
 }
